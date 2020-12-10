@@ -42,6 +42,13 @@
             </el-row>
             </div>
             <div style="margin-bottom:25px">
+            <el-radio-group v-model="choice">
+                <el-radio :label="3">无处理</el-radio>
+                <el-radio :label="2">word2vec</el-radio>
+                <el-radio :label="1">Bert</el-radio>
+            </el-radio-group>
+            </div>
+            <div style="margin-bottom:25px">
             <el-row gutter="10">
             <el-col :span="6" offset="6"><el-button v-on:click="addWord">添加</el-button></el-col>
             <el-col :span="3" offset="-6"><el-button type="primary" icon="el-icon-search" v-on:click="sumbitQuery">搜索</el-button></el-col>
@@ -83,7 +90,8 @@ export default {
             sentenceList: [],
             showsenList: [],
             scrollCount: 1,
-            loading: false
+            loading: false,
+            choice: 3
         }
 	},
 	methods: {
@@ -131,14 +139,13 @@ export default {
             let posList = []
             let relative = []
             let relativeObject = []
-            console.log(this.itemList.length)
             for(var i=0;i<this.itemList.length;i++){
                 wordsList.push(this.itemList[i].word)
                 posList.push(this.itemList[i].pos)
                 relative.push(this.itemList[i].relative)
                 relativeObject.push(this.itemList[i].relativeObject)
             }
-            axios.get(path, {params:{'words': wordsList.join(), 'type':'2', 'posList': posList.join(), 'relative':relative.join(), 'relativeObject':relativeObject.join()}}
+            axios.get(path, {params:{'words': wordsList.join(),'choice': this.choice, 'type':'2','relative':relative.join(), 'relativeObject':relativeObject.join()}}
             ).then((response) => {
                 this.sentenceList = response.data
                 this.loading = false
