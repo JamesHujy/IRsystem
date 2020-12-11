@@ -43,6 +43,10 @@ class Word2vecRanker():
             self.load()
         except:
             self.write()
+        self.compute_unk()
+
+    def compute_unk(self):
+        self.unk_vec = np.mean(self.vectors, axis=0)
 
     def write(self):
         words = []
@@ -71,14 +75,18 @@ class Word2vecRanker():
                 self.words.append(line.strip())
         self.words2index = {word:index for index, word in enumerate(self.words)}
         self.vectors = np.load("vector.npy")
-    
+
     def get_rep(self, item_list):
         ans_list = []
         for item in item_list:
             item_cut = list(jieba.cut(item))
-            index = [self.words2index[each] for each in item_cut]
-            rep = self.vectors[index]
-            rep = np.mean(rep, axis=0)
+            rep = []
+            for item in item_cut:
+                try:
+                    rep.append(self.vectors[self.words2index[item]])
+                except:
+                    rep.append(self.unk_vec)
+            rep = np.mean(np.array(rep), axis=0)
             ans_list.append(rep)
         return ans_list
 
