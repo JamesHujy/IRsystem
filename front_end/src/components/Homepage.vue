@@ -43,9 +43,9 @@
             </div>
             <div style="margin-bottom:25px">
             <el-radio-group v-model="choice">
-                <el-radio :label="3">无处理</el-radio>
-                <el-radio :label="2">word2vec</el-radio>
-                <el-radio :label="1">Bert</el-radio>
+                <el-radio :label="2">无处理</el-radio>
+                <el-radio :label="1">word2vec</el-radio>
+                <el-radio :label="0">Bert</el-radio>
             </el-radio-group>
             </div>
             <div style="margin-bottom:25px">
@@ -145,7 +145,7 @@ export default {
                 relative.push(this.itemList[i].relative)
                 relativeObject.push(this.itemList[i].relativeObject)
             }
-            axios.get(path, {params:{'words': wordsList.join(),'choice': this.choice, 'type':'2','relative':relative.join(), 'relativeObject':relativeObject.join()}}
+            axios.get(path, {params:{'words': wordsList.join(),'choice': this.choice, 'type':'2', 'posList': posList.join(), 'relative':relative.join(), 'relativeObject':relativeObject.join()}}
             ).then((response) => {
                 this.sentenceList = response.data
                 this.loading = false

@@ -5,19 +5,25 @@ from io import BytesIO
 import json
 from searchengine import SearchEngine
 from retriever import Retriever
+from transformers import BertTokenizer, BertModel
+from ranker import BertRanker, Word2vecRanker
 
 app = Flask(__name__)
 cors = CORS(app, resources={r'/get': {"origins": "*"}})
 se = SearchEngine()
 
-with open('./cache/word_to_pos_count2.json') as f:
+with open('../cache/word_to_pos_count2.json') as f:
     word_to_pos = json.load(f)
-with open('./cache/pos_hanzi.json') as f:
+with open('../cache/pos_hanzi.json') as f:
     pos_to_hanzi = json.load(f)
 hanzi_to_pos = {hanzi:pos for pos, hanzi in pos_to_hanzi.items()}
 hanzi_to_pos['不限'] = 'all'
 print('finish load...')
 initialPos = ['名词', '人名', '地名', '机构名', '其它专名', '数词', '量词', '数量词', '时间词', '方位词', '处所词', '动词', '形容词', '副词', '前接成分', '后接成分', '习语', '简称', '代词', '连词', '介词', '助词', '语气助词', '叹词', '拟声词', '语素', '标点', '其它']
+bert = BertModel.from_pretrained("hfl/chinese-bert-wwm-ext")
+tokenizer = BertTokenizer.from_pretrained("hfl/chinese-bert-wwm-ext")
+bertranker = BertRanker()
+word2vecranker = Word2vecRanker("/data/disk2/private/hujinyi/IRHomework/cache/sgns.renmin.word")
 
 @app.route('/')
 def hello_world():
@@ -26,7 +32,6 @@ def hello_world():
 @app.route('/get', methods=['GET', 'POST'])
 def getData():
     types = request.args.get('type')
-    print(types)
     if types == '1':
         words = request.args.get('words')
         if len(words) == 0:
@@ -37,6 +42,10 @@ def getData():
             response = pos
         return jsonify(response)
     else:
+        choice_list = ['bert', 'word2vec', 'none']
+        choice_index = int(request.args.get('choice'))
+        choice = choice_list[choice_index]
+
         query_list = request.args.get('words').split(',')
         sen_list, ans_pos_list = se.query([each for each in query_list if len(each) > 0])
         pos_list = request.args.get('posList').split(',')
@@ -50,7 +59,14 @@ def getData():
         if list(set(relative_list)) != ['不限']:
             response = re.filter_relative()
         response = ["".join(each) for each in response]
-        return jsonify(response[:50])
+        if choice == 'none':
+            return jsonify(response[:50])
+        elif choice == 'bert':
+            new_sen = bertranker.rank(query_list, response[:50])
+            return jsonify(new_sen)
+        else:
+            new_sen = word2vecranker.rank(query_list, response[:50])
+            return jsonify(new_sen)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=12306)
